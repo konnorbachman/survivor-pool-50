@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Survivor Pool — Season 50</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0d0a;
+    --surface: #111612;
+    --surface2: #181f18;
+    --border: #2a3a2a;
+    --amber: #e8a020;
+    --amber-dim: #8a5c0e;
+    --green: #3d6b3a;
+    --green-bright: #5a9e55;
+    --red: #c0392b;
+    --red-dim: #7a1f16;
+    --blue: #2a6080;
+    --blue-bright: #4a9abb;
+    --gold: #d4af37;
+    --text: #d4c9b0;
+    --text-dim: #7a7060;
+    --text-bright: #f0e8d0;
+    --eliminated: #3a1a14;
+    --out: #1a1010;
+    --locked-bg: #0d1520;
+    --locked-border: #1e3a5a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    min-height: 100vh;
+    overflow-x: auto;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .app { position: relative; z-index: 1; }
+  .hidden { display: none !important; }
+
+  /* ════════ LOADING ════════ */
+  #loading-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+  .loading-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: var(--text-bright);
+    text-shadow: 0 0 40px rgba(232,160,32,0.3);
+  }
+  .loading-title span { color: var(--amber); }
+  .loading-spinner {
+    width: 28px; height: 28px;
+    border: 2px solid var(--border);
+    border-top-color: var(--amber);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  .loading-msg {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ════════ LOGIN ════════ */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 390px;
+    box-shadow: 0 0 80px rgba(0,0,0,0.8), 0 0 30px rgba(232,160,32,0.06);
+  }
+
+  .login-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--amber-dim);
+    margin-bottom: 0.4rem;
+  }
+
+  .login-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    letter-spacing: 0.05em;
+    line-height: 1;
+    color: var(--text-bright);
+    text-shadow: 0 0 40px rgba(232,160,32,0.3);
+    margin-bottom: 2rem;
+  }
+  .login-title span { color: var(--amber); }
+
+  .login-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .login-tab {
+    flex: 1;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 0.5rem;
+    text-align: center;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: none;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    transition: all 0.15s;
+  }
+  .login-tab:hover { color: var(--text); }
+  .login-tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+  .login-field { margin-bottom: 1rem; }
+  .login-field label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.4rem;
+  }
+  .login-field select, .login-field input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-bright);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    padding: 0.6rem 0.75rem;
+  }
+  .login-field select:focus, .login-field input:focus { outline: none; border-color: var(--amber); }
+
+  .login-error {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.63rem;
+    color: var(--red);
+    min-height: 1.2em;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.5rem;
+  }
+  .login-success {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.63rem;
+    color: var(--green-bright);
+    min-height: 1.2em;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.5rem;
+  }
+
+  .login-btn {
+    width: 100%;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: var(--amber);
+    color: #0a0d0a;
+    border: none;
+    padding: 0.7rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.15s;
+  }
+  .login-btn:hover { background: #f0b030; }
+  .login-btn.secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    margin-top: 0.5rem;
+  }
+  .login-btn.secondary:hover { border-color: var(--amber); color: var(--amber); background: var(--surface2); }
+
+  .invite-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-top: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+
+  /* ════════ HEADER ════════ */
+  header {
+    padding: 1.25rem 2.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #0f1a0f 0%, transparent 100%);
+    display: flex;
+    align-items: flex-end;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .logo-block { flex: 1; min-width: 200px; }
+
+  .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 0.15rem;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--text-bright);
+    text-shadow: 0 0 40px rgba(232,160,32,0.3);
+  }
+  h1 span { color: var(--amber); }
+
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+  }
+
+  .session-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .session-badge .who { color: var(--amber); font-weight: 500; }
+
+  .header-actions {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  button {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  button:hover { border-color: var(--amber); color: var(--amber); }
+  button.primary { background: var(--amber); color: #0a0d0a; border-color: var(--amber); font-weight: 500; }
+  button.primary:hover { background: #f0b030; }
+  button.ghost { border-color: transparent; color: var(--text-dim); }
+  button.ghost:hover { color: var(--red); border-color: var(--red-dim); }
+
+  /* ════════ TORCH DIVIDER ════════ */
+  .torch-divider {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--amber-dim), var(--amber), var(--amber-dim), transparent);
+    opacity: 0.6;
+  }
+
+  /* ════════ TABS (main) ════════ */
+  .main-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    padding: 0 2.5rem;
+  }
+  .main-tab {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 0.65rem 0.25rem;
+    margin-right: 2rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: none;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    transition: all 0.15s;
+  }
+  .main-tab:hover { color: var(--text); border-color: transparent; }
+  .main-tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+  /* ════════ ADMIN BAR ════════ */
+  .admin-bar {
+    background: rgba(42,96,128,0.08);
+    border-bottom: 1px solid var(--locked-border);
+    padding: 0.4rem 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .admin-bar-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.56rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--blue-bright);
+  }
+  .admin-bar-note { font-family: 'DM Mono', monospace; font-size: 0.56rem; color: var(--text-dim); }
+
+  /* ════════ LEGEND ════════ */
+  .legend {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0.55rem 2.5rem;
+    border-bottom: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.07em;
+    color: var(--text-dim);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 0.3rem; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+  .dot-safe { background: var(--green); }
+  .dot-elim { background: var(--red-dim); }
+  .dot-out { background: #3a2020; border: 1px solid var(--red-dim); }
+  .dot-locked { background: var(--locked-bg); border: 1px solid var(--locked-border); }
+
+  /* ════════ GRID ════════ */
+  .grid-wrapper { overflow-x: auto; padding: 1.25rem 2.5rem 3rem; }
+
+  table { border-collapse: separate; border-spacing: 0; min-width: 100%; }
+
+  thead tr.week-row th {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.95rem;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    padding: 0.4rem 0.5rem 0;
+    text-align: center;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+  }
+  thead tr.week-row th.player-col {
+    text-align: left;
+    font-size: 0.58rem;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--amber-dim);
+    min-width: 150px;
+    padding-left: 0;
+  }
+  th.week-num { color: var(--amber); min-width: 160px; }
+  th.week-num.locked-col { color: var(--blue-bright); }
+  th.week-num.pre-game { color: var(--text-dim); min-width: 80px; }
+
+  .lock-btn {
+    display: inline-block;
+    font-size: 0.5rem;
+    padding: 0.1rem 0.28rem;
+    margin-left: 0.3rem;
+    vertical-align: middle;
+    border: 1px solid var(--locked-border);
+    background: transparent;
+    color: var(--blue-bright);
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+  }
+  .lock-btn:hover { opacity: 1; }
+  .lock-btn.is-locked { background: var(--locked-bg); opacity: 1; }
+
+  thead tr.bootee-row th {
+    padding: 0.18rem 0.5rem 0.55rem;
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.56rem;
+    letter-spacing: 0.07em;
+    position: sticky;
+    top: 32px;
+    background: var(--bg);
+    z-index: 10;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .bootee-select {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.15rem 0.28rem;
+    cursor: pointer;
+    max-width: 128px;
+  }
+  .bootee-select:focus { outline: none; border-color: var(--amber); }
+  .bootee-select.has-value { color: var(--red); border-color: var(--red-dim); }
+  .bootee-static { font-family: 'DM Mono', monospace; font-size: 0.63rem; color: var(--red); }
+  .bootee-tbd { font-family: 'DM Mono', monospace; font-size: 0.58rem; color: var(--text-dim); font-style: italic; }
+
+  tbody tr { transition: background 0.1s; }
+  tbody tr:hover td { background: #131a13; }
+  tbody td { padding: 0.28rem 0.5rem; border-bottom: 1px solid #161e16; vertical-align: middle; }
+
+  td.player-name-cell {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-bright);
+    white-space: nowrap;
+    padding-right: 1rem;
+    border-right: 1px solid var(--border);
+    position: sticky;
+    left: 0;
+    background: var(--bg);
+    z-index: 5;
+  }
+  tbody tr:hover td.player-name-cell { background: #131a13; }
+  td.player-name-cell.is-me { color: var(--amber); }
+  td.player-name-cell.player-out { color: var(--red-dim); text-decoration: line-through; }
+  td.player-name-cell.is-me.player-out { color: #8a4030; }
+
+  .out-badge { font-family: 'DM Mono', monospace; font-size: 0.48rem; color: var(--red); margin-left: 0.35rem; }
+  .me-badge { font-family: 'DM Mono', monospace; font-size: 0.46rem; color: var(--amber-dim); margin-left: 0.35rem; border: 1px solid var(--amber-dim); padding: 0.04rem 0.28rem; vertical-align: middle; }
+
+  td.pick-cell { text-align: center; min-width: 155px; }
+  td.pick-cell.locked-col { background: var(--locked-bg); }
+  td.pick-cell.elim-pick { background: var(--eliminated); }
+  td.pick-cell.player-out-cell { background: var(--out); }
+
+  .pick-select {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.66rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.26rem 0.38rem;
+    cursor: pointer;
+    width: 100%;
+  }
+  .pick-select:focus { outline: none; border-color: var(--green-bright); }
+  .pick-select.safe { border-color: var(--green); color: var(--green-bright); }
+
+  .pick-static {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.66rem;
+    color: var(--text);
+    display: inline-block;
+    padding: 0.26rem 0.38rem;
+  }
+  .pick-static.safe { color: var(--green-bright); }
+  .pick-static.empty { color: var(--text-dim); font-style: italic; }
+  .pick-static.locked-pick { color: var(--blue-bright); }
+
+  .elim-tag { display: inline-block; font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--red); padding: 0.2rem 0.38rem; border: 1px solid var(--red-dim); background: var(--eliminated); width: 100%; text-align: center; }
+  .absent-tag { display: inline-block; font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--text-dim); padding: 0.2rem 0.38rem; border: 1px solid #201818; background: var(--out); width: 100%; text-align: center; }
+  .dash-cell { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--text-dim); }
+
+  /* ════════ STANDINGS ════════ */
+  .standings-wrapper { padding: 1.5rem 2.5rem 3rem; max-width: 700px; }
+  .standings-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.1em;
+    color: var(--amber);
+    margin-bottom: 1.25rem;
+  }
+
+  .standings-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  .standings-table th {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.56rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 0.4rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .standings-table th:last-child, .standings-table td:last-child { text-align: center; }
+
+  .standings-table td {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
+    color: var(--text);
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #161e16;
+    vertical-align: middle;
+  }
+  .standings-table tr:hover td { background: #131a13; }
+  .standings-table tr.is-out td { color: var(--text-dim); }
+  .standings-table tr.is-me td { color: var(--amber); }
+  .standings-table tr.is-me.is-out td { color: #8a5020; }
+
+  .rank-cell {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    color: var(--text-dim);
+    width: 2rem;
+    text-align: center !important;
+  }
+  .rank-1 { color: var(--gold); }
+  .rank-2 { color: #b0b0b0; }
+  .rank-3 { color: #cd7f32; }
+
+  .paid-badge {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.08em;
+    padding: 0.15rem 0.4rem;
+    border-radius: 2px;
+  }
+  .paid-yes { background: rgba(61,107,58,0.3); color: var(--green-bright); border: 1px solid var(--green); }
+  .paid-no  { background: rgba(192,57,43,0.15); color: #e07060; border: 1px solid var(--red-dim); cursor: pointer; }
+  .paid-btn { cursor: pointer; background: none; border: none; padding: 0; font-size: inherit; }
+
+  .status-active { color: var(--green-bright); font-family: 'DM Mono', monospace; font-size: 0.6rem; }
+  .status-out    { color: var(--red); font-family: 'DM Mono', monospace; font-size: 0.6rem; }
+
+  .survivor-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+  }
+
+  /* ════════ MODALS ════════ */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.82);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2rem;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 0 60px rgba(0,0,0,0.8), 0 0 20px rgba(232,160,32,0.05);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.08em;
+    color: var(--amber);
+    margin-bottom: 1rem;
+  }
+  .modal p { font-family: 'Crimson Pro', serif; color: var(--text-dim); font-size: 0.92rem; line-height: 1.5; margin-bottom: 0.5rem; }
+  .modal label { display: block; font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.35rem; margin-top: 1rem; }
+  .modal input, .modal textarea, .modal select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text-bright);
+    font-family: 'DM Mono', monospace; font-size: 0.76rem; padding: 0.5rem 0.65rem; resize: vertical;
+  }
+  .modal input:focus, .modal textarea:focus, .modal select:focus { outline: none; border-color: var(--amber); }
+  .modal-actions { display: flex; gap: 0.5rem; margin-top: 1.5rem; justify-content: flex-end; }
+  .hint { font-family: 'DM Mono', monospace; font-size: 0.56rem; color: var(--text-dim); margin-top: 0.3rem; line-height: 1.6; }
+
+  .first-run-note {
+    font-family: 'DM Mono', monospace; font-size: 0.58rem; color: var(--amber-dim);
+    line-height: 1.6; background: rgba(232,160,32,0.05); border: 1px solid var(--amber-dim);
+    padding: 0.65rem 0.9rem; margin: 0.75rem 0 0.25rem;
+  }
+
+  /* Invite code display */
+  .invite-code-box {
+    background: var(--surface2);
+    border: 1px solid var(--amber-dim);
+    padding: 1rem;
+    margin-top: 0.75rem;
+  }
+  .invite-code-label { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.5rem; }
+  .invite-code-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.3em;
+    color: var(--amber);
+    margin-bottom: 0.5rem;
+  }
+  .invite-code-note { font-family: 'DM Mono', monospace; font-size: 0.57rem; color: var(--text-dim); line-height: 1.6; }
+
+  /* Player mgmt */
+  .player-mgmt-list { margin-top: 0.75rem; border: 1px solid var(--border); }
+  .player-mgmt-row { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); }
+  .player-mgmt-row:last-child { border-bottom: none; }
+  .player-mgmt-row .pname { flex: 1; font-family: 'Crimson Pro', serif; font-size: 0.95rem; color: var(--text-bright); }
+  .player-mgmt-row .pstatus { font-family: 'DM Mono', monospace; font-size: 0.55rem; color: var(--text-dim); margin-right: 0.25rem; }
+  .player-mgmt-row input.ppw { font-family: 'DM Mono', monospace; font-size: 0.58rem; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 0.22rem 0.38rem; width: 100px; }
+  .player-mgmt-row input.ppw:focus { outline: none; border-color: var(--amber); }
+  .del-btn { font-size: 0.52rem; padding: 0.18rem 0.38rem; border-color: var(--red-dim) !important; color: var(--red-dim) !important; }
+  .del-btn:hover { border-color: var(--red) !important; color: var(--red) !important; }
+  .modal-section-sep { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0 0; }
+
+  /* toast */
+  #toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    padding: 0.6rem 1.2rem;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.success { border-color: var(--green); color: var(--green-bright); }
+  #toast.error { border-color: var(--red-dim); color: var(--red); }
+
+  /* empty state */
+  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-dim); }
+  .empty-state .big { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: var(--border); }
+  .empty-state p { font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.1em; margin-top: 0.5rem; }
+
+  /* sync indicator */
+  .sync-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    display: inline-block;
+    margin-right: 0.3rem;
+  }
+  .sync-dot.syncing { background: var(--amber); animation: pulse 0.8s ease-in-out infinite; }
+  .sync-dot.error { background: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  @keyframes flicker { 0%,95%,100%{opacity:1}96%{opacity:0.85}98%{opacity:0.95} }
+  .torch-icon { display:inline-block; animation:flicker 4s ease-in-out infinite; color:var(--amber); }
+
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); }
+  ::-webkit-scrollbar-thumb:hover { background:var(--amber-dim); }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ════════ LOADING ════════ -->
+<div id="loading-screen">
+  <div class="loading-title"><span class="torch-icon">🔥</span> TRIBAL <span>TRACKER</span></div>
+  <div class="loading-spinner"></div>
+  <div class="loading-msg">Loading pool data...</div>
+</div>
+
+<!-- ════════ LOGIN ════════ -->
+<div id="login-screen" class="hidden">
+  <div class="login-box">
+    <div class="login-eyebrow">Season 50 · Survivor Pool</div>
+    <div class="login-title"><span class="torch-icon">🔥</span> TRIBAL <span>TRACKER</span></div>
+
+    <div class="login-tabs">
+      <button class="login-tab active" id="tab-player" onclick="switchLoginTab('player')">Player Login</button>
+      <button class="login-tab" id="tab-invite" onclick="switchLoginTab('invite')">Use Invite Code</button>
+      <button class="login-tab" id="tab-admin" onclick="switchLoginTab('admin')">Commissioner</button>
+    </div>
+
+    <!-- Player login -->
+    <div id="login-player-section">
+      <div class="login-field">
+        <label>Your Name</label>
+        <select id="login-name-select"><option value="">— Select your name —</option></select>
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Enter your password" onkeydown="if(event.key==='Enter')attemptLogin()">
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <button class="login-btn" onclick="attemptLogin()">Enter Tribal Council</button>
+    </div>
+
+    <!-- Invite code -->
+    <div id="login-invite-section" class="hidden">
+      <div class="login-field">
+        <label>Invite Code</label>
+        <input type="text" id="invite-code-input" placeholder="Enter your invite code" style="text-transform:uppercase;letter-spacing:0.2em" maxlength="6">
+      </div>
+      <div class="login-field">
+        <label>Choose Your Password</label>
+        <input type="password" id="invite-pw1" placeholder="At least 4 characters">
+      </div>
+      <div class="login-field">
+        <label>Confirm Password</label>
+        <input type="password" id="invite-pw2" placeholder="Repeat password" onkeydown="if(event.key==='Enter')claimInvite()">
+      </div>
+      <div class="login-error" id="invite-error"></div>
+      <div class="login-success" id="invite-success"></div>
+      <button class="login-btn" onclick="claimInvite()">Claim Your Spot</button>
+      <div class="invite-hint">
+        Ask the Commissioner for your personal invite code. Each code can only be used once to set your password.
+      </div>
+    </div>
+
+    <!-- Admin login -->
+    <div id="login-admin-section" class="hidden">
+      <div class="login-field">
+        <label>Commissioner Password</label>
+        <input type="password" id="admin-login-pw" placeholder="Commissioner password" onkeydown="if(event.key==='Enter')attemptAdminLogin()">
+      </div>
+      <div class="login-error" id="admin-error"></div>
+      <button class="login-btn" onclick="attemptAdminLogin()">Enter as Commissioner</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MAIN APP ════════ -->
+<div id="main-app" class="hidden">
+  <header>
+    <div class="logo-block">
+      <div class="eyebrow">Season 50 · Survivor Pool</div>
+      <h1><span class="torch-icon">🔥</span> TRIBAL <span>TRACKER</span></h1>
+    </div>
+    <div class="header-right">
+      <div class="session-badge">
+        <span class="sync-dot" id="sync-dot"></span>
+        <span id="session-crown" class="hidden">👑</span>
+        Signed in as <span class="who" id="session-name"></span>
+        <button class="ghost" onclick="logout()">Sign out</button>
+      </div>
+      <div class="header-actions" id="admin-controls" style="display:none">
+        <button onclick="openCastModal()">Edit Cast</button>
+        <button onclick="openManagePlayersModal()">Manage Players</button>
+        <button onclick="openAddWeekModal()" class="primary">+ Add Week</button>
+      </div>
+    </div>
+  </header>
+  <div class="torch-divider"></div>
+
+  <div class="admin-bar hidden" id="admin-bar">
+    <span class="admin-bar-label">👑 Commissioner Mode</span>
+    <span class="admin-bar-note">Full edit access. 🔒/🔓 in column headers to lock weeks. Manage invites &amp; payment in "Manage Players".</span>
+  </div>
+
+  <div class="main-tabs">
+    <button class="main-tab active" id="main-tab-grid" onclick="switchMainTab('grid')">Picks Grid</button>
+    <button class="main-tab" id="main-tab-standings" onclick="switchMainTab('standings')">Standings</button>
+  </div>
+
+  <!-- PICKS GRID TAB -->
+  <div id="tab-grid">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot dot-safe"></div> Safe</div>
+      <div class="legend-item"><div class="legend-dot dot-elim"></div> Eliminated (you survive)</div>
+      <div class="legend-item"><div class="legend-dot dot-out"></div> OUT of pool</div>
+      <div class="legend-item"><div class="legend-dot dot-locked"></div> Locked week</div>
+      <div style="flex:1"></div>
+      <span style="color:var(--amber-dim);font-size:0.58rem;font-family:'DM Mono',monospace">Week 1 = no picks</span>
+    </div>
+    <div class="grid-wrapper">
+      <div id="table-container"></div>
+    </div>
+  </div>
+
+  <!-- STANDINGS TAB -->
+  <div id="tab-standings" class="hidden">
+    <div class="standings-wrapper">
+      <div class="standings-title">⚔️ Pool Standings</div>
+      <div id="standings-container"></div>
+    </div>
+  </div>
+</div><!-- /main-app -->
+</div><!-- /app -->
+
+<!-- ════════ TOAST ════════ -->
+<div id="toast"></div>
+
+<!-- ════════ MODALS ════════ -->
+
+<!-- FIRST RUN -->
+<div id="modal-firstrun" class="modal-backdrop hidden">
+  <div class="modal">
+    <h2>First Launch Setup</h2>
+    <p>Welcome to Tribal Tracker. Set a Commissioner password to get started.</p>
+    <div class="first-run-note">This password gives you full control — picks, bootees, players, payment status, and week locking. Keep it to yourself.</div>
+    <label>Commissioner Password</label>
+    <input type="password" id="firstrun-pw1" placeholder="Choose a password (min 4 characters)">
+    <label>Confirm Password</label>
+    <input type="password" id="firstrun-pw2" placeholder="Repeat password" onkeydown="if(event.key==='Enter')confirmFirstRun()">
+    <div class="login-error" id="firstrun-error" style="margin-top:0.75rem"></div>
+    <div class="modal-actions">
+      <button class="primary" onclick="confirmFirstRun()">Set Password &amp; Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD WEEK -->
+<div id="modal-week" class="modal-backdrop hidden">
+  <div class="modal">
+    <h2>Add Week</h2>
+    <p>Adding <strong id="next-week-label" style="color:var(--amber)"></strong>. Set the bootee once the episode airs.</p>
+    <div class="modal-actions">
+      <button onclick="closeModal('modal-week')">Cancel</button>
+      <button class="primary" onclick="confirmAddWeek()">Add Week</button>
+    </div>
+  </div>
+</div>
+
+<!-- CAST -->
+<div id="modal-cast" class="modal-backdrop hidden">
+  <div class="modal">
+    <h2>Edit Cast</h2>
+    <label>Castaways — one per line</label>
+    <textarea id="input-cast" rows="14" placeholder="One castaway name per line..."></textarea>
+    <div class="hint">Names already used in picks are preserved even if removed from this list.</div>
+    <div class="modal-actions">
+      <button onclick="closeModal('modal-cast')">Cancel</button>
+      <button class="primary" onclick="confirmCast()">Save Cast</button>
+    </div>
+  </div>
+</div>
+
+<!-- MANAGE PLAYERS -->
+<div id="modal-players" class="modal-backdrop hidden">
+  <div class="modal">
+    <h2>Manage Players</h2>
+
+    <p>Players with a pending invite code haven't set their password yet. Existing players: leave password blank to keep current.</p>
+    <div id="player-mgmt-list" class="player-mgmt-list"></div>
+
+    <hr class="modal-section-sep">
+
+    <label>Add New Player + Generate Invite</label>
+    <div style="display:flex;gap:0.5rem">
+      <input type="text" id="new-player-name" placeholder="Player name" style="flex:1">
+    </div>
+    <div class="hint">This creates an invite code you share with them. They set their own password on first login.</div>
+
+    <div id="new-invite-display" class="hidden">
+      <div class="invite-code-box">
+        <div class="invite-code-label">Invite code for <span id="new-invite-for"></span></div>
+        <div class="invite-code-value" id="new-invite-code"></div>
+        <div class="invite-code-note">
+          Share this code with them. They click "Use Invite Code" on the login screen and enter it to set their password. One-time use only.
+        </div>
+      </div>
+    </div>
+
+    <hr class="modal-section-sep">
+    <label>Change Commissioner Password</label>
+    <input type="password" id="admin-pw-change" placeholder="Leave blank to keep current">
+
+    <div class="modal-actions">
+      <button onclick="closeModal('modal-players')">Done</button>
+      <button onclick="addNewPlayer()" class="primary">Generate Invite</button>
+      <button onclick="savePlayerManagement()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// STORAGE — uses window.storage (persistent cloud storage)
+// Falls back to localStorage if not available
+// ════════════════════════════════════════════════════════════
+
+const STORAGE_KEY = 'survivor-pool-s50-v3';
+
+async function storageGet(key) {
+  try {
+    if (window.storage) {
+      const result = await window.storage.get(key);
+      return result ? JSON.parse(result.value) : null;
+    }
+  } catch(e) {}
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+async function storageSet(key, value) {
+  setSyncState('syncing');
+  try {
+    if (window.storage) {
+      await window.storage.set(key, JSON.stringify(value));
+      setSyncState('ok');
+      return;
+    }
+  } catch(e) {}
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    setSyncState('ok');
+  } catch(e) {
+    setSyncState('error');
+  }
+}
+
+function setSyncState(s) {
+  const dot = document.getElementById('sync-dot');
+  if (!dot) return;
+  dot.className = 'sync-dot' + (s === 'syncing' ? ' syncing' : s === 'error' ? ' error' : '');
+}
+
+// ════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════
+
+function defaultState() {
+  return {
+    cast: [
+      "Aiden","Becca","Carlos","Diana","Eliot",
+      "Fatima","George","Hannah","Ivan","Jasmine",
+      "Kyle","Lena","Marco","Nina","Oscar",
+      "Priya","Quinn","Rosa","Sam","Talia","Uma","Vince"
+    ],
+    players: [],       // ["Alice","Bob",...]
+    passwords: {},     // { name: hash }
+    inviteCodes: {},   // { code: playerName } — pending claims
+    adminHash: null,
+    weeks: [1],
+    bootees: {},       // { weekNum: name }
+    lockedWeeks: {},   // { weekNum: true }
+    picks: {},         // { "player__week": castaway }
+    paid: {}           // { playerName: true }
+  };
+}
+
+let state = defaultState();
+let session = { loggedIn: false, isAdmin: false, playerName: null };
+let activeMainTab = 'grid';
+
+// ════════════════════════════════════════════════════════════
+// HASH
+// ════════════════════════════════════════════════════════════
+
+function simpleHash(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h, 31) ^ str.charCodeAt(i);
+  }
+  return (h >>> 0).toString(36);
+}
+
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+
+async function init() {
+  const saved = await storageGet(STORAGE_KEY);
+  if (saved) state = Object.assign(defaultState(), saved);
+
+  document.getElementById('loading-screen').classList.add('hidden');
+
+  if (!state.adminHash) {
+    document.getElementById('modal-firstrun').classList.remove('hidden');
+    document.getElementById('login-screen').classList.remove('hidden');
+  } else {
+    populateLoginSelect();
+    document.getElementById('login-screen').classList.remove('hidden');
+  }
+}
+
+async function save() {
+  await storageSet(STORAGE_KEY, state);
+}
+
+// ════════════════════════════════════════════════════════════
+// LOGIN / LOGOUT
+// ════════════════════════════════════════════════════════════
+
+function switchLoginTab(tab) {
+  ['player','invite','admin'].forEach(t => {
+    document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+    document.getElementById(`login-${t}-section`).classList.toggle('hidden', t !== tab);
+  });
+  // clear errors
+  ['login-error','invite-error','invite-success','admin-error'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '';
+  });
+}
+
+function populateLoginSelect() {
+  const sel = document.getElementById('login-name-select');
+  sel.innerHTML = '<option value="">— Select your name —</option>';
+  for (const p of state.players) {
+    const o = document.createElement('option');
+    o.value = p; o.textContent = p;
+    sel.appendChild(o);
+  }
+}
+
+function attemptLogin() {
+  const name = document.getElementById('login-name-select').value;
+  const pw   = document.getElementById('login-password').value;
+  const err  = document.getElementById('login-error');
+  if (!name) { err.textContent = 'Please select your name.'; return; }
+  if (!pw)   { err.textContent = 'Please enter your password.'; return; }
+  if (!state.passwords[name]) { err.textContent = 'No password set. Use your invite code to set one.'; return; }
+  if (state.passwords[name] !== simpleHash(pw)) { err.textContent = 'Incorrect password.'; return; }
+  session = { loggedIn: true, isAdmin: false, playerName: name };
+  enterApp();
+}
+
+function attemptAdminLogin() {
+  const pw  = document.getElementById('admin-login-pw').value;
+  const err = document.getElementById('admin-error');
+  if (!pw) { err.textContent = 'Please enter the commissioner password.'; return; }
+  if (simpleHash(pw) !== state.adminHash) { err.textContent = 'Incorrect password.'; return; }
+  session = { loggedIn: true, isAdmin: true, playerName: 'Commissioner' };
+  enterApp();
+}
+
+async function claimInvite() {
+  const code  = document.getElementById('invite-code-input').value.trim().toUpperCase();
+  const pw1   = document.getElementById('invite-pw1').value;
+  const pw2   = document.getElementById('invite-pw2').value;
+  const err   = document.getElementById('invite-error');
+  const succ  = document.getElementById('invite-success');
+  err.textContent = ''; succ.textContent = '';
+
+  if (!code) { err.textContent = 'Please enter your invite code.'; return; }
+  if (pw1.length < 4) { err.textContent = 'Password must be at least 4 characters.'; return; }
+  if (pw1 !== pw2) { err.textContent = 'Passwords do not match.'; return; }
+
+  // Re-fetch latest state to avoid race conditions
+  const fresh = await storageGet(STORAGE_KEY);
+  if (fresh) Object.assign(state, fresh);
+
+  const playerName = state.inviteCodes[code];
+  if (!playerName) { err.textContent = 'Invalid or already-used invite code.'; return; }
+
+  // Claim it
+  state.passwords[playerName] = simpleHash(pw1);
+  delete state.inviteCodes[code];
+  await save();
+
+  succ.textContent = `Welcome, ${playerName}! Password set. Signing you in...`;
+  setTimeout(() => {
+    session = { loggedIn: true, isAdmin: false, playerName };
+    enterApp();
+  }, 1200);
+}
+
+function enterApp() {
+  document.getElementById('session-name').textContent = session.playerName;
+  document.getElementById('session-crown').classList.toggle('hidden', !session.isAdmin);
+  document.getElementById('admin-controls').style.display = session.isAdmin ? 'flex' : 'none';
+  document.getElementById('admin-bar').classList.toggle('hidden', !session.isAdmin);
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('main-app').classList.remove('hidden');
+  switchMainTab('grid');
+  render();
+}
+
+function logout() {
+  session = { loggedIn: false, isAdmin: false, playerName: null };
+  document.getElementById('login-password').value = '';
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('admin-login-pw').value = '';
+  switchLoginTab('player');
+  populateLoginSelect();
+  document.getElementById('main-app').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+
+// ════════════════════════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════════════════════════
+
+function switchMainTab(tab) {
+  activeMainTab = tab;
+  document.getElementById('main-tab-grid').classList.toggle('active', tab === 'grid');
+  document.getElementById('main-tab-standings').classList.toggle('active', tab === 'standings');
+  document.getElementById('tab-grid').classList.toggle('hidden', tab !== 'grid');
+  document.getElementById('tab-standings').classList.toggle('hidden', tab !== 'standings');
+  if (tab === 'standings') renderStandings();
+}
+
+// ════════════════════════════════════════════════════════════
+// DATA HELPERS
+// ════════════════════════════════════════════════════════════
+
+function pickKey(p, w) { return `${p}__${w}`; }
+function getPlayerPick(p, w) { return state.picks[pickKey(p, w)] || ''; }
+
+async function setPlayerPick(p, w, v) {
+  state.picks[pickKey(p, w)] = v;
+  await save();
+  render();
+}
+
+async function setBootee(w, v) {
+  state.bootees[w] = v;
+  await save();
+  render();
+  if (activeMainTab === 'standings') renderStandings();
+}
+
+function playerPickedNames(player, excludeWeek) {
+  return state.weeks
+    .filter(w => w !== excludeWeek)
+    .map(w => getPlayerPick(player, w))
+    .filter(Boolean);
+}
+
+function isPlayerOut(player) {
+  for (const week of state.weeks) {
+    if (week === 1) continue;
+    const pick = getPlayerPick(player, week);
+    const bootee = state.bootees[week];
+    if (pick && bootee && pick === bootee) return { week };
+  }
+  return null;
+}
+
+// All bootees so far (castaway names)
+function allBootees() {
+  return new Set(Object.values(state.bootees).filter(Boolean));
+}
+
+// Available picks for a player for a given week
+// Excludes: already picked by this player, bootees from prior weeks
+function availablePicks(player, forWeek) {
+  const used = new Set(playerPickedNames(player, forWeek));
+  const bootedBefore = new Set();
+  for (const [w, b] of Object.entries(state.bootees)) {
+    if (b && parseInt(w) < forWeek) bootedBefore.add(b);
+  }
+  return state.cast.filter(c => !used.has(c) && !bootedBefore.has(c));
+}
+
+function canEdit(player, week) {
+  if (!session.loggedIn) return false;
+  if (session.isAdmin) return true;
+  if (session.playerName !== player) return false;
+  if (state.lockedWeeks[week]) return false;
+  if (isPlayerOut(player)) return false;
+  return true;
+}
+
+function sortedPlayers() {
+  const active = [], out = [];
+  for (const p of state.players) {
+    (isPlayerOut(p) ? out : active).push(p);
+  }
+  active.sort((a,b) => a.localeCompare(b));
+  out.sort((a,b) => a.localeCompare(b));
+  return [...active, ...out];
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER — PICKS GRID
+// ════════════════════════════════════════════════════════════
+
+function render() {
+  if (activeMainTab === 'standings') { renderStandings(); return; }
+  const container = document.getElementById('table-container');
+
+  if (state.players.length === 0) {
+    container.innerHTML = `<div class="empty-state">
+      <div class="big">NO PLAYERS</div>
+      <p>${session.isAdmin ? 'Use "Manage Players" to add participants.' : 'No players yet — check back soon.'}</p>
+    </div>`;
+    return;
+  }
+
+  const ordered = sortedPlayers();
+  let html = '<table><thead>';
+
+  // Week header row
+  html += '<tr class="week-row">';
+  html += '<th class="player-col">Players</th>';
+  for (const week of state.weeks) {
+    const locked = !!state.lockedWeeks[week];
+    const label  = week === 1 ? 'Pre-Game' : `Week ${week}`;
+    let cls = 'week-num' + (week === 1 ? ' pre-game' : locked ? ' locked-col' : '');
+
+    let lockBtn = '';
+    if (session.isAdmin && week !== 1) {
+      lockBtn = `<button class="lock-btn ${locked?'is-locked':''}"
+        onclick="toggleLock(${week})" title="${locked?'Unlock':'Lock'} week">${locked?'🔒':'🔓'}</button>`;
+    } else if (locked && week !== 1) {
+      lockBtn = `<span style="font-size:0.7rem;margin-left:0.25rem;opacity:0.4">🔒</span>`;
+    }
+    html += `<th class="${cls}">${label}${lockBtn}</th>`;
+  }
+  html += '</tr>';
+
+  // Bootee row
+  html += '<tr class="bootee-row">';
+  html += '<th class="player-col"></th>';
+  for (const week of state.weeks) {
+    if (week === 1) { html += '<th><span class="bootee-tbd">No boot</span></th>'; continue; }
+    const bootee = state.bootees[week] || '';
+    html += '<th>';
+    if (session.isAdmin) {
+      const bootedBefore = new Set();
+      for (const [w, b] of Object.entries(state.bootees)) {
+        if (b && parseInt(w) < week) bootedBefore.add(b);
+      }
+      const opts = state.cast.filter(c => !bootedBefore.has(c) || c === bootee);
+      let optHtml = '<option value="">— Bootee —</option>';
+      for (const c of opts) optHtml += `<option value="${esc(c)}" ${bootee===c?'selected':''}>${esc(c)}</option>`;
+      html += `<select class="bootee-select ${bootee?'has-value':''}" data-week="${week}" onchange="handleBooteeChange(this)">${optHtml}</select>`;
+    } else if (bootee) {
+      html += `<span class="bootee-static">💀 ${esc(bootee)}</span>`;
+    } else {
+      html += '<span class="bootee-tbd">TBD</span>';
+    }
+    html += '</th>';
+  }
+  html += '</tr></thead><tbody>';
+
+  // Player rows
+  for (const player of ordered) {
+    const outInfo = isPlayerOut(player);
+    const isMe    = session.playerName === player;
+
+    let nameCls = 'player-name-cell';
+    if (isMe) nameCls += ' is-me';
+    if (outInfo) nameCls += ' player-out';
+
+    html += '<tr>';
+    html += `<td class="${nameCls}">
+      ${esc(player)}
+      ${isMe    ? '<span class="me-badge">YOU</span>' : ''}
+      ${outInfo ? `<span class="out-badge">OUT W${outInfo.week}</span>` : ''}
+    </td>`;
+
+    for (const week of state.weeks) {
+      if (week === 1) { html += '<td class="pick-cell"><span class="dash-cell">—</span></td>'; continue; }
+
+      const pick    = getPlayerPick(player, week);
+      const bootee  = state.bootees[week] || '';
+      const isElim  = !!(pick && bootee && pick === bootee);
+      const locked  = !!state.lockedWeeks[week];
+      const alreadyOut = !!(outInfo && outInfo.week < week);
+      const editable = canEdit(player, week);
+
+      let cellCls = 'pick-cell';
+      if (locked) cellCls += ' locked-col';
+      if (isElim) cellCls += ' elim-pick';
+      else if (alreadyOut) cellCls += ' player-out-cell';
+
+      html += `<td class="${cellCls}">`;
+
+      if (isElim) {
+        html += `<span class="elim-tag">💀 ${esc(pick)}</span>`;
+      } else if (alreadyOut) {
+        html += '<span class="absent-tag">—</span>';
+      } else if (editable) {
+        // Dropdown — exclude all-time bootees from picks list
+        const avail = availablePicks(player, week);
+        // Also exclude castaways already voted off in any week (even future? No — only before this week)
+        if (pick && !avail.includes(pick)) avail.unshift(pick);
+        let optHtml = '<option value="">— Pick —</option>';
+        for (const c of avail) optHtml += `<option value="${esc(c)}" ${pick===c?'selected':''}>${esc(c)}</option>`;
+        const safe = pick && bootee && !isElim;
+        html += `<select class="pick-select ${safe?'safe':''}"
+          data-player="${esc(player)}" data-week="${week}"
+          onchange="handlePickChange(this)">${optHtml}</select>`;
+      } else {
+        const safe = pick && bootee && !isElim;
+        const lockedPick = locked && pick;
+        html += `<span class="pick-static ${safe?'safe':''} ${lockedPick?'locked-pick':''} ${!pick?'empty':''}">
+          ${pick ? esc(pick) : '—'}
+        </span>`;
+      }
+
+      html += '</td>';
+    }
+    html += '</tr>';
+  }
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER — STANDINGS
+// ════════════════════════════════════════════════════════════
+
+function renderStandings() {
+  const container = document.getElementById('standings-container');
+  if (state.players.length === 0) {
+    container.innerHTML = '<p style="font-family:\'DM Mono\',monospace;font-size:0.7rem;color:var(--text-dim)">No players yet.</p>';
+    return;
+  }
+
+  const ordered = sortedPlayers();
+  const activeCount = ordered.filter(p => !isPlayerOut(p)).length;
+
+  let rankCounter = 1;
+  let html = `
+    <div style="margin-bottom:1rem;font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--text-dim)">
+      <span style="color:var(--green-bright)">${activeCount}</span> still alive &nbsp;·&nbsp;
+      <span style="color:var(--red)">${ordered.length - activeCount}</span> eliminated
+    </div>
+    <table class="standings-table">
+      <thead>
+        <tr>
+          <th style="width:2.5rem">#</th>
+          <th>Player</th>
+          <th>Status</th>
+          <th>Weeks Survived</th>
+          <th>Paid</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  for (const player of ordered) {
+    const outInfo  = isPlayerOut(player);
+    const isMe     = session.playerName === player;
+    const paid     = !!state.paid[player];
+    const weeksSurvived = outInfo
+      ? outInfo.week - 2  // they made it through outInfo.week - 1 weeks (week 1 skipped)
+      : state.weeks.filter(w => w > 1).length;
+
+    const rank = !outInfo ? rankCounter++ : '—';
+    const rankCls = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+
+    let rowCls = '';
+    if (isMe && !outInfo) rowCls = 'is-me';
+    if (outInfo) rowCls += ' is-out';
+
+    const paidHtml = paid
+      ? `<span class="paid-badge paid-yes">✓ Paid</span>`
+      : session.isAdmin
+        ? `<span class="paid-badge paid-no" onclick="togglePaid('${esc(player)}')" title="Click to mark as paid">✗ Unpaid</span>`
+        : `<span class="paid-badge paid-no">✗ Unpaid</span>`;
+
+    html += `
+      <tr class="${rowCls}">
+        <td class="rank-cell ${rankCls}">${rank}</td>
+        <td>
+          ${esc(player)}
+          ${isMe ? '<span class="me-badge" style="margin-left:0.4rem">YOU</span>' : ''}
+        </td>
+        <td>
+          ${outInfo
+            ? `<span class="status-out">Out (W${outInfo.week})</span>`
+            : `<span class="status-active">● Active</span>`}
+        </td>
+        <td class="survivor-count">${weeksSurvived} wk${weeksSurvived !== 1 ? 's' : ''}</td>
+        <td>${paidHtml}</td>
+      </tr>`;
+  }
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════════
+// EVENT HANDLERS
+// ════════════════════════════════════════════════════════════
+
+async function handlePickChange(sel) {
+  const player = sel.dataset.player;
+  const week   = parseInt(sel.dataset.week);
+  if (!canEdit(player, week)) return;
+  await setPlayerPick(player, week, sel.value);
+}
+
+async function handleBooteeChange(sel) {
+  if (!session.isAdmin) return;
+  await setBootee(parseInt(sel.dataset.week), sel.value);
+}
+
+async function toggleLock(week) {
+  if (!session.isAdmin) return;
+  state.lockedWeeks[week] = !state.lockedWeeks[week];
+  await save();
+  render();
+}
+
+async function togglePaid(player) {
+  if (!session.isAdmin) return;
+  state.paid[player] = !state.paid[player];
+  await save();
+  renderStandings();
+  showToast(`${player} marked as ${state.paid[player] ? 'paid ✓' : 'unpaid'}`, state.paid[player] ? 'success' : '');
+}
+
+// ════════════════════════════════════════════════════════════
+// FIRST RUN
+// ════════════════════════════════════════════════════════════
+
+async function confirmFirstRun() {
+  const p1  = document.getElementById('firstrun-pw1').value;
+  const p2  = document.getElementById('firstrun-pw2').value;
+  const err = document.getElementById('firstrun-error');
+  if (p1.length < 4) { err.textContent = 'Password must be at least 4 characters.'; return; }
+  if (p1 !== p2)     { err.textContent = 'Passwords do not match.'; return; }
+  state.adminHash = simpleHash(p1);
+  await save();
+  closeModal('modal-firstrun');
+  populateLoginSelect();
+}
+
+// ════════════════════════════════════════════════════════════
+// ADD WEEK
+// ════════════════════════════════════════════════════════════
+
+function openAddWeekModal() {
+  const next = Math.max(...state.weeks, 0) + 1;
+  document.getElementById('next-week-label').textContent = next === 1 ? 'Pre-Game (Week 1)' : `Week ${next}`;
+  document.getElementById('modal-week').classList.remove('hidden');
+}
+
+async function confirmAddWeek() {
+  const next = Math.max(...state.weeks, 0) + 1;
+  state.weeks.push(next);
+  await save();
+  render();
+  closeModal('modal-week');
+}
+
+// ════════════════════════════════════════════════════════════
+// CAST
+// ════════════════════════════════════════════════════════════
+
+function openCastModal() {
+  document.getElementById('input-cast').value = state.cast.join('\n');
+  document.getElementById('modal-cast').classList.remove('hidden');
+}
+
+async function confirmCast() {
+  const names = document.getElementById('input-cast').value
+    .split('\n').map(s => s.trim()).filter(Boolean);
+  if (names.length < 2) { alert('Please enter at least 2 castaways.'); return; }
+  const inUse = new Set(Object.values(state.picks).filter(Boolean));
+  state.cast = [...new Set([...names, ...[...inUse].filter(n => !names.includes(n))])];
+  await save();
+  render();
+  closeModal('modal-cast');
+}
+
+// ════════════════════════════════════════════════════════════
+// MANAGE PLAYERS
+// ════════════════════════════════════════════════════════════
+
+let tempPlayers = [];
+
+function openManagePlayersModal() {
+  tempPlayers = state.players.map(p => ({ name: p, pw: '' }));
+  renderPlayerMgmtList();
+  document.getElementById('new-player-name').value = '';
+  document.getElementById('admin-pw-change').value = '';
+  document.getElementById('new-invite-display').classList.add('hidden');
+  document.getElementById('modal-players').classList.remove('hidden');
+}
+
+function renderPlayerMgmtList() {
+  const el = document.getElementById('player-mgmt-list');
+  if (!tempPlayers.length) {
+    el.innerHTML = `<div style="padding:0.65rem 0.6rem;font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--text-dim)">No players yet.</div>`;
+    return;
+  }
+  el.innerHTML = tempPlayers.map((p, i) => {
+    const hasPw      = !!state.passwords[p.name];
+    const hasInvite  = Object.values(state.inviteCodes).includes(p.name);
+    let status = '';
+    if (!hasPw && hasInvite) status = '<span class="pstatus" style="color:var(--amber-dim)">invite pending</span>';
+    else if (!hasPw) status = '<span class="pstatus" style="color:var(--red-dim)">no password</span>';
+    else status = '<span class="pstatus" style="color:var(--green)">active</span>';
+
+    return `<div class="player-mgmt-row">
+      <span class="pname">${esc(p.name)}</span>
+      ${status}
+      <input type="password" class="ppw" placeholder="New pw" value="${esc(p.pw)}"
+        oninput="tempPlayers[${i}].pw=this.value" title="Leave blank to keep existing">
+      <button class="del-btn" onclick="removeTempPlayer(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function removeTempPlayer(i) {
+  if (!confirm(`Remove "${tempPlayers[i].name}"? Their picks are preserved.`)) return;
+  tempPlayers.splice(i, 1);
+  renderPlayerMgmtList();
+}
+
+function addNewPlayer() {
+  const name = document.getElementById('new-player-name').value.trim();
+  if (!name) { alert('Please enter a player name.'); return; }
+  if (state.players.includes(name) || tempPlayers.find(p => p.name === name)) {
+    alert('A player with that name already exists.'); return;
+  }
+
+  // Generate invite code
+  let code = generateCode();
+  while (state.inviteCodes[code]) code = generateCode(); // ensure unique
+
+  // Stage the player (not saved until "Save Changes")
+  tempPlayers.push({ name, pw: '', inviteCode: code });
+
+  // Show the invite code
+  document.getElementById('new-invite-for').textContent = name;
+  document.getElementById('new-invite-code').textContent = code;
+  document.getElementById('new-invite-display').classList.remove('hidden');
+  document.getElementById('new-player-name').value = '';
+
+  renderPlayerMgmtList();
+}
+
+async function savePlayerManagement() {
+  // Validate
+  for (const p of tempPlayers) {
+    const isNew = !state.players.includes(p.name);
+    if (!isNew && p.pw !== '' && p.pw.length < 4) {
+      alert(`New password for "${p.name}" must be at least 4 characters.`); return;
+    }
+  }
+
+  const adminPw = document.getElementById('admin-pw-change').value;
+  if (adminPw) {
+    if (adminPw.length < 4) { alert('Commissioner password must be at least 4 characters.'); return; }
+    state.adminHash = simpleHash(adminPw);
+  }
+
+  // Apply players
+  state.players = tempPlayers.map(p => p.name);
+
+  for (const p of tempPlayers) {
+    if (p.pw) state.passwords[p.name] = simpleHash(p.pw);
+    if (p.inviteCode) state.inviteCodes[p.inviteCode] = p.name;
+  }
+
+  // Remove passwords for deleted players
+  for (const key of Object.keys(state.passwords)) {
+    if (!state.players.includes(key)) delete state.passwords[key];
+  }
+  // Clean up invite codes for removed players
+  for (const [code, pname] of Object.entries(state.inviteCodes)) {
+    if (!state.players.includes(pname)) delete state.inviteCodes[code];
+  }
+
+  await save();
+  populateLoginSelect();
+  render();
+  closeModal('modal-players');
+  showToast('Player changes saved', 'success');
+}
+
+// ════════════════════════════════════════════════════════════
+// MODAL UTILS
+// ════════════════════════════════════════════════════════════
+
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+
+document.querySelectorAll('.modal-backdrop').forEach(el => {
+  el.addEventListener('click', function(e) {
+    if (this.id === 'modal-firstrun') return;
+    if (e.target === this) this.classList.add('hidden');
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════════════
+
+let toastTimer;
+function showToast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 2500);
+}
+
+// ════════════════════════════════════════════════════════════
+// ESC UTIL
+// ════════════════════════════════════════════════════════════
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ════════════════════════════════════════════════════════════
+// GO
+// ════════════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
