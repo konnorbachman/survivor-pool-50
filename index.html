@@ -878,23 +878,24 @@
   <div class="modal">
     <h2>Manage Players</h2>
 
-    <p>Players with a pending invite code haven't set their password yet. Existing players: leave password blank to keep current.</p>
+    <p>Active players are listed below. Use the password field to reset someone's password. Add new players with the form at the bottom — their invite code is generated and saved instantly.</p>
     <div id="player-mgmt-list" class="player-mgmt-list"></div>
 
     <hr class="modal-section-sep">
 
-    <label>Add New Player + Generate Invite</label>
-    <div style="display:flex;gap:0.5rem">
-      <input type="text" id="new-player-name" placeholder="Player name" style="flex:1">
+    <label>Add New Player</label>
+    <div style="display:flex;gap:0.5rem;align-items:flex-end">
+      <input type="text" id="new-player-name" placeholder="Player name" style="flex:1" onkeydown="if(event.key==='Enter')addNewPlayer()">
+      <button onclick="addNewPlayer()" class="primary" style="white-space:nowrap;padding:0.5rem 0.85rem">Generate Invite</button>
     </div>
-    <div class="hint">This creates an invite code you share with them. They set their own password on first login.</div>
+    <div class="hint">Saves the player immediately and generates a one-time invite code to share with them.</div>
 
     <div id="new-invite-display" class="hidden">
       <div class="invite-code-box">
         <div class="invite-code-label">Invite code for <span id="new-invite-for"></span></div>
         <div class="invite-code-value" id="new-invite-code"></div>
         <div class="invite-code-note">
-          Share this code with them. They click "Use Invite Code" on the login screen and enter it to set their password. One-time use only.
+          Share this code with them. They open the app, click "Use Invite Code", enter the code, and set their own password. One-time use only.
         </div>
       </div>
     </div>
@@ -905,8 +906,7 @@
 
     <div class="modal-actions">
       <button onclick="closeModal('modal-players')">Done</button>
-      <button onclick="addNewPlayer()" class="primary">Generate Invite</button>
-      <button onclick="savePlayerManagement()">Save Changes</button>
+      <button onclick="savePlayerManagement()" class="primary">Save Changes</button>
     </div>
   </div>
 </div>
@@ -1627,18 +1627,24 @@ function removeTempPlayer(i) {
   renderPlayerMgmtList();
 }
 
-function addNewPlayer() {
+async function addNewPlayer() {
   const name = document.getElementById('new-player-name').value.trim();
   if (!name) { alert('Please enter a player name.'); return; }
-  if (state.players.includes(name) || tempPlayers.find(p => p.name === name)) {
+  if (state.players.includes(name)) {
     alert('A player with that name already exists.'); return;
   }
 
-  // Generate invite code
+  // Generate a unique invite code
   let code = generateCode();
-  while (state.inviteCodes[code]) code = generateCode(); // ensure unique
+  while (state.inviteCodes[code]) code = generateCode();
 
-  // Stage the player (not saved until "Save Changes")
+  // Save immediately to state so the invite is live right away
+  state.players.push(name);
+  state.inviteCodes[code] = name;
+  await save();
+  populateLoginSelect();
+
+  // Also add to tempPlayers so they appear in the list within this modal session
   tempPlayers.push({ name, pw: '', inviteCode: code });
 
   // Show the invite code
@@ -1648,13 +1654,13 @@ function addNewPlayer() {
   document.getElementById('new-player-name').value = '';
 
   renderPlayerMgmtList();
+  showToast(`${name} added — invite code ready`, 'success');
 }
 
 async function savePlayerManagement() {
-  // Validate
+  // Validate password changes
   for (const p of tempPlayers) {
-    const isNew = !state.players.includes(p.name);
-    if (!isNew && p.pw !== '' && p.pw.length < 4) {
+    if (p.pw !== '' && p.pw.length < 4) {
       alert(`New password for "${p.name}" must be at least 4 characters.`); return;
     }
   }
@@ -1665,28 +1671,28 @@ async function savePlayerManagement() {
     state.adminHash = simpleHash(adminPw);
   }
 
-  // Apply players
-  state.players = tempPlayers.map(p => p.name);
-
+  // Apply password resets for existing players
   for (const p of tempPlayers) {
     if (p.pw) state.passwords[p.name] = simpleHash(p.pw);
-    if (p.inviteCode) state.inviteCodes[p.inviteCode] = p.name;
   }
 
-  // Remove passwords for deleted players
+  // Handle removals — tempPlayers reflects current desired list
+  const keepNames = new Set(tempPlayers.map(p => p.name));
+  state.players = state.players.filter(p => keepNames.has(p));
+
+  // Remove passwords and invite codes for deleted players
   for (const key of Object.keys(state.passwords)) {
-    if (!state.players.includes(key)) delete state.passwords[key];
+    if (!keepNames.has(key)) delete state.passwords[key];
   }
-  // Clean up invite codes for removed players
   for (const [code, pname] of Object.entries(state.inviteCodes)) {
-    if (!state.players.includes(pname)) delete state.inviteCodes[code];
+    if (!keepNames.has(pname)) delete state.inviteCodes[code];
   }
 
   await save();
   populateLoginSelect();
   render();
   closeModal('modal-players');
-  showToast('Player changes saved', 'success');
+  showToast('Changes saved', 'success');
 }
 
 // ════════════════════════════════════════════════════════════
