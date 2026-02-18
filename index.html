@@ -1007,8 +1007,15 @@ function generateCode() {
 // ════════════════════════════════════════════════════════════
 
 async function init() {
-  const saved = await storageGet(STORAGE_KEY);
-  if (saved) state = Object.assign(defaultState(), saved);
+  // Load app state from cloud storage
+  let loadedState = null;
+  try {
+    loadedState = await storageGet(STORAGE_KEY);
+  } catch(e) {}
+
+  if (loadedState) {
+    state = Object.assign(defaultState(), loadedState);
+  }
 
   document.getElementById('loading-screen').classList.add('hidden');
 
@@ -1017,17 +1024,30 @@ async function init() {
     const savedSession = localStorage.getItem('survivor-pool-session');
     if (savedSession) {
       const parsed = JSON.parse(savedSession);
-      // Validate it — make sure the player still exists and still has a password
-      const stillValid = parsed.isAdmin
-        ? !!state.adminHash  // admin session: valid as long as admin password exists
-        : parsed.playerName && state.players.includes(parsed.playerName) && !!state.passwords[parsed.playerName];
+
+      // Validate against loaded state if available, otherwise trust the session
+      // (state load can fail transiently — don't log the user out because of a network blip)
+      let stillValid = false;
+      if (parsed.isAdmin) {
+        // Admin: valid if state loaded and adminHash exists, OR if state failed to load (give benefit of doubt)
+        stillValid = !loadedState || !!state.adminHash;
+      } else if (parsed.playerName) {
+        if (loadedState) {
+          // State loaded successfully — validate properly
+          stillValid = state.players.includes(parsed.playerName) && !!state.passwords[parsed.playerName];
+        } else {
+          // State failed to load — trust the saved session rather than kicking them out
+          stillValid = true;
+        }
+      }
 
       if (stillValid) {
         session = parsed;
+        // Re-save session to keep it fresh
+        try { localStorage.setItem('survivor-pool-session', JSON.stringify(session)); } catch(e) {}
         enterApp();
         return;
       } else {
-        // Stale session — clear it
         localStorage.removeItem('survivor-pool-session');
       }
     }
