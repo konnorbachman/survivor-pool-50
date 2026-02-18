@@ -784,6 +784,7 @@
         <button onclick="openCastModal()">Edit Cast</button>
         <button onclick="openManagePlayersModal()">Manage Players</button>
         <button onclick="openAddWeekModal()" class="primary">+ Add Week</button>
+        <button onclick="deleteLastWeek()" id="delete-week-btn" style="display:none">Delete Last Week</button>
       </div>
     </div>
   </header>
@@ -1011,6 +1012,27 @@ async function init() {
 
   document.getElementById('loading-screen').classList.add('hidden');
 
+  // Try to restore a previous session from localStorage
+  try {
+    const savedSession = localStorage.getItem('survivor-pool-session');
+    if (savedSession) {
+      const parsed = JSON.parse(savedSession);
+      // Validate it — make sure the player still exists and still has a password
+      const stillValid = parsed.isAdmin
+        ? !!state.adminHash  // admin session: valid as long as admin password exists
+        : parsed.playerName && state.players.includes(parsed.playerName) && !!state.passwords[parsed.playerName];
+
+      if (stillValid) {
+        session = parsed;
+        enterApp();
+        return;
+      } else {
+        // Stale session — clear it
+        localStorage.removeItem('survivor-pool-session');
+      }
+    }
+  } catch(e) {}
+
   if (!state.adminHash) {
     document.getElementById('modal-firstrun').classList.remove('hidden');
     document.getElementById('login-screen').classList.remove('hidden');
@@ -1103,6 +1125,9 @@ async function claimInvite() {
 }
 
 function enterApp() {
+  // Persist session so page refreshes don't log the user out
+  try { localStorage.setItem('survivor-pool-session', JSON.stringify(session)); } catch(e) {}
+
   document.getElementById('session-name').textContent = session.playerName;
   document.getElementById('session-crown').classList.toggle('hidden', !session.isAdmin);
   document.getElementById('admin-controls').style.display = session.isAdmin ? 'flex' : 'none';
@@ -1111,10 +1136,12 @@ function enterApp() {
   document.getElementById('main-app').classList.remove('hidden');
   switchMainTab('grid');
   render();
+  if (session.isAdmin) updateDeleteWeekBtn();
 }
 
 function logout() {
   session = { loggedIn: false, isAdmin: false, playerName: null };
+  try { localStorage.removeItem('survivor-pool-session'); } catch(e) {}
   document.getElementById('login-password').value = '';
   document.getElementById('login-error').textContent = '';
   document.getElementById('admin-login-pw').value = '';
@@ -1169,7 +1196,10 @@ function isPlayerOut(player) {
     if (week === 1) continue;
     const pick = getPlayerPick(player, week);
     const bootee = state.bootees[week];
-    if (pick && bootee && pick === bootee) return { week };
+    // Eliminated by picking the bootee
+    if (pick && bootee && pick === bootee) return { week, reason: 'bootee' };
+    // Eliminated by missing the deadline — week is locked and no pick was made
+    if (!pick && state.lockedWeeks[week]) return { week, reason: 'no-pick' };
   }
   return null;
 }
@@ -1285,7 +1315,7 @@ function render() {
     html += `<td class="${nameCls}">
       ${esc(player)}
       ${isMe    ? '<span class="me-badge">YOU</span>' : ''}
-      ${outInfo ? `<span class="out-badge">OUT W${outInfo.week}</span>` : ''}
+      ${outInfo ? `<span class="out-badge">${outInfo.reason === 'no-pick' ? 'NO PICK W' : 'OUT W'}${outInfo.week}</span>` : ''}
     </td>`;
 
     for (const week of state.weeks) {
@@ -1294,6 +1324,7 @@ function render() {
       const pick    = getPlayerPick(player, week);
       const bootee  = state.bootees[week] || '';
       const isElim  = !!(pick && bootee && pick === bootee);
+      const isNoPick = !!(outInfo && outInfo.week === week && outInfo.reason === 'no-pick');
       const locked  = !!state.lockedWeeks[week];
       const alreadyOut = !!(outInfo && outInfo.week < week);
       const editable = canEdit(player, week);
@@ -1301,12 +1332,15 @@ function render() {
       let cellCls = 'pick-cell';
       if (locked) cellCls += ' locked-col';
       if (isElim) cellCls += ' elim-pick';
+      else if (isNoPick) cellCls += ' elim-pick';
       else if (alreadyOut) cellCls += ' player-out-cell';
 
       html += `<td class="${cellCls}">`;
 
       if (isElim) {
         html += `<span class="elim-tag">💀 ${esc(pick)}</span>`;
+      } else if (isNoPick) {
+        html += `<span class="elim-tag" style="color:#c07040;border-color:#7a4020">⏰ No pick</span>`;
       } else if (alreadyOut) {
         html += '<span class="absent-tag">—</span>';
       } else if (editable) {
@@ -1374,7 +1408,7 @@ function renderStandings() {
     const isMe     = session.playerName === player;
     const paid     = !!state.paid[player];
     const weeksSurvived = outInfo
-      ? outInfo.week - 2  // they made it through outInfo.week - 1 weeks (week 1 skipped)
+      ? outInfo.week - 2  // they made it through weeks up to but not including outInfo.week (week 1 skipped)
       : state.weeks.filter(w => w > 1).length;
 
     const rank = !outInfo ? rankCounter++ : '—';
@@ -1399,7 +1433,7 @@ function renderStandings() {
         </td>
         <td>
           ${outInfo
-            ? `<span class="status-out">Out (W${outInfo.week})</span>`
+            ? `<span class="status-out">${outInfo.reason === 'no-pick' ? '⏰ No pick' : '💀 Bootee'} (W${outInfo.week})</span>`
             : `<span class="status-active">● Active</span>`}
         </td>
         <td class="survivor-count">${weeksSurvived} wk${weeksSurvived !== 1 ? 's' : ''}</td>
@@ -1473,7 +1507,39 @@ async function confirmAddWeek() {
   state.weeks.push(next);
   await save();
   render();
+  updateDeleteWeekBtn();
   closeModal('modal-week');
+}
+
+async function deleteLastWeek() {
+  if (!session.isAdmin) return;
+  const lastWeek = Math.max(...state.weeks);
+  if (lastWeek <= 1) { alert('Cannot delete the pre-game week.'); return; }
+  if (!confirm(`Delete Week ${lastWeek}? This will remove all picks and bootee data for that week.`)) return;
+  // Remove the week
+  state.weeks = state.weeks.filter(w => w !== lastWeek);
+  // Clear picks for that week
+  for (const player of state.players) {
+    delete state.picks[pickKey(player, lastWeek)];
+  }
+  // Clear bootee and lock for that week
+  delete state.bootees[lastWeek];
+  delete state.lockedWeeks[lastWeek];
+  await save();
+  render();
+  updateDeleteWeekBtn();
+}
+
+function updateDeleteWeekBtn() {
+  const btn = document.getElementById('delete-week-btn');
+  if (!btn) return;
+  // Show delete button only when there's more than just the pre-game week
+  const hasDeleteableWeek = state.weeks.some(w => w > 1);
+  btn.style.display = hasDeleteableWeek ? 'inline-block' : 'none';
+  if (hasDeleteableWeek) {
+    const lastWeek = Math.max(...state.weeks);
+    btn.textContent = `Delete Week ${lastWeek}`;
+  }
 }
 
 // ════════════════════════════════════════════════════════════
