@@ -497,6 +497,7 @@
   }
   .pick-static.safe { color: var(--green-bright); }
   .pick-static.empty { color: var(--text-dim); font-style: italic; }
+  .pick-static.hidden-pick { color: var(--border); letter-spacing: 0.15em; }
   .pick-static.locked-pick { color: var(--blue-bright); }
 
   .elim-tag { display: inline-block; font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--red); padding: 0.2rem 0.38rem; border: 1px solid var(--red-dim); background: var(--eliminated); width: 100%; text-align: center; }
@@ -1430,11 +1431,17 @@ function render() {
           data-player="${esc(player)}" data-week="${week}"
           onchange="handlePickChange(this)">${optHtml}</select>`;
       } else {
-        const safe = pick && bootee && !isElim;
-        const lockedPick = locked && pick;
-        html += `<span class="pick-static ${safe?'safe':''} ${lockedPick?'locked-pick':''} ${!pick?'empty':''}">
-          ${pick ? esc(pick) : '—'}
-        </span>`;
+        // Hide other players' picks until the week is locked
+        const canSee = session.isAdmin || isMe || locked;
+        if (!canSee) {
+          html += `<span class="pick-static hidden-pick">${pick ? '●●●' : '—'}</span>`;
+        } else {
+          const safe = pick && bootee && !isElim;
+          const lockedPick = locked && pick;
+          html += `<span class="pick-static ${safe?'safe':''} ${lockedPick?'locked-pick':''} ${!pick?'empty':''}">
+            ${pick ? esc(pick) : '—'}
+          </span>`;
+        }
       }
 
       html += '</td>';
