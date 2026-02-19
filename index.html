@@ -754,8 +754,17 @@
       </div>
     </div>
 
+    <!-- Pool not ready notice (shown before admin has done first-run setup) -->
+    <div id="pool-not-ready" class="hidden" style="margin-top:0.5rem;padding:0.75rem;border:1px solid var(--border);font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-dim);line-height:1.6;text-align:center;">
+      The pool hasn't been set up yet.<br>Check back soon.
+    </div>
+
     <!-- Admin login -->
     <div id="login-admin-section" class="hidden">
+      <div id="admin-setup-prompt" class="hidden" style="margin-bottom:1rem;padding:0.75rem;border:1px solid var(--amber-dim);font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--amber-dim);line-height:1.8;">
+        No commissioner password set yet.<br>
+        <a id="setup-link" href="?setup" style="color:var(--amber);text-decoration:underline">Click here to run first-time setup →</a>
+      </div>
       <div class="login-field">
         <label>Commissioner Password</label>
         <input type="password" id="admin-login-pw" placeholder="Commissioner password" onkeydown="if(event.key==='Enter')attemptAdminLogin()">
@@ -1054,8 +1063,18 @@ async function init() {
   } catch(e) {}
 
   if (!state.adminHash) {
-    document.getElementById('modal-firstrun').classList.remove('hidden');
-    document.getElementById('login-screen').classList.remove('hidden');
+    // Only show first-run setup if the URL has ?setup param — prevents other
+    // users from seeing the admin creation screen on a fresh load
+    const isSetupMode = new URLSearchParams(window.location.search).has('setup');
+    if (isSetupMode) {
+      document.getElementById('modal-firstrun').classList.remove('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+    } else {
+      // Show login screen with a "not yet configured" message
+      populateLoginSelect();
+      document.getElementById('login-screen').classList.remove('hidden');
+      document.getElementById('pool-not-ready').classList.remove('hidden');
+    }
   } else {
     populateLoginSelect();
     document.getElementById('login-screen').classList.remove('hidden');
@@ -1080,6 +1099,13 @@ function switchLoginTab(tab) {
     const el = document.getElementById(id);
     if (el) el.textContent = '';
   });
+  // If no admin password set yet and switching to admin tab, show the setup prompt
+  if (tab === 'admin') {
+    const noAdmin = !state.adminHash;
+    document.getElementById('admin-setup-prompt').classList.toggle('hidden', !noAdmin);
+    document.getElementById('admin-login-pw').closest('.login-field').classList.toggle('hidden', noAdmin);
+    document.querySelector('[onclick="attemptAdminLogin()"]').classList.toggle('hidden', noAdmin);
+  }
 }
 
 function populateLoginSelect() {
@@ -1509,7 +1535,10 @@ async function confirmFirstRun() {
   state.adminHash = simpleHash(p1);
   await save();
   closeModal('modal-firstrun');
+  // Clean ?setup out of the URL now that setup is done
+  window.history.replaceState({}, '', window.location.pathname);
   populateLoginSelect();
+  showToast('Commissioner password set — you can now sign in', 'success');
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1621,10 +1650,23 @@ function renderPlayerMgmtList() {
   }).join('');
 }
 
-function removeTempPlayer(i) {
-  if (!confirm(`Remove "${tempPlayers[i].name}"? Their picks are preserved.`)) return;
+async function removeTempPlayer(i) {
+  const name = tempPlayers[i].name;
+  if (!confirm(`Remove "${name}" from the pool?\n\nTheir pick history is preserved in case you re-add them later.`)) return;
+
+  // Remove immediately from state and save
+  state.players = state.players.filter(p => p !== name);
+  delete state.passwords[name];
+  // Also revoke any pending invite codes for this player
+  for (const [code, pname] of Object.entries(state.inviteCodes)) {
+    if (pname === name) delete state.inviteCodes[code];
+  }
+
   tempPlayers.splice(i, 1);
+  await save();
+  populateLoginSelect();
   renderPlayerMgmtList();
+  showToast(`${name} removed`, '');
 }
 
 async function addNewPlayer() {
