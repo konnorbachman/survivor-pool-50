@@ -929,12 +929,12 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:            "AIzaSyBVdOKYvbDLPbfxSDsPYVEQ8kRnLDmUyxo",
-  authDomain:        "survivor-pool-50.firebaseapp.com",
-  projectId:         "survivor-pool-50",
-  storageBucket:     "survivor-pool-50.firebasestorage.app",
-  messagingSenderId: "785590171363",
-  appId:             "1:785590171363:web:8e99a4c9190bbc4b3eb7d6"
+  apiKey:            "PASTE_YOUR_API_KEY_HERE",
+  authDomain:        "PASTE_YOUR_AUTH_DOMAIN_HERE",
+  projectId:         "PASTE_YOUR_PROJECT_ID_HERE",
+  storageBucket:     "PASTE_YOUR_STORAGE_BUCKET_HERE",
+  messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID_HERE",
+  appId:             "PASTE_YOUR_APP_ID_HERE"
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
@@ -947,7 +947,7 @@ const DOC_REF = doc(db, "pool", "state");
 // ════════════════════════════════════════════════════════════
 
 function isFirebaseConfigured() {
-  return firebaseConfig.apiKey && firebaseConfig.apiKey !== "AIzaSyBVdOKYvbDLPbfxSDsPYVEQ8kRnLDmUyxo";
+  return firebaseConfig.apiKey && firebaseConfig.apiKey !== "PASTE_YOUR_API_KEY_HERE";
 }
 
 async function storageGet() {
@@ -1807,6 +1807,33 @@ function esc(s) {
 // ════════════════════════════════════════════════════════════
 // GO
 // ════════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════════
+// EXPOSE FUNCTIONS GLOBALLY (required for onclick handlers
+// when using ES modules — functions are scoped to module by default)
+// ════════════════════════════════════════════════════════════
+window.switchLoginTab      = switchLoginTab;
+window.attemptLogin        = attemptLogin;
+window.attemptAdminLogin   = attemptAdminLogin;
+window.claimInvite         = claimInvite;
+window.logout              = logout;
+window.switchMainTab       = switchMainTab;
+window.confirmFirstRun     = confirmFirstRun;
+window.openAddWeekModal    = openAddWeekModal;
+window.confirmAddWeek      = confirmAddWeek;
+window.deleteLastWeek      = deleteLastWeek;
+window.openCastModal       = openCastModal;
+window.confirmCast         = confirmCast;
+window.openManagePlayersModal = openManagePlayersModal;
+window.addNewPlayer        = addNewPlayer;
+window.savePlayerManagement = savePlayerManagement;
+window.removeTempPlayer    = removeTempPlayer;
+window.closeModal          = closeModal;
+window.handlePickChange    = handlePickChange;
+window.handleBooteeChange  = handleBooteeChange;
+window.toggleLock          = toggleLock;
+window.togglePaid          = togglePaid;
+
 init();
 </script>
 </body>
