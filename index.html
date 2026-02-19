@@ -947,7 +947,7 @@ const DOC_REF = doc(db, "pool", "state");
 // ════════════════════════════════════════════════════════════
 
 function isFirebaseConfigured() {
-  return firebaseConfig.apiKey && firebaseConfig.apiKey !== "AIzaSyBVdOKYvbDLPbfxSDsPYVEQ8kRnLDmUyxo";
+  return firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith("PASTE_");
 }
 
 async function storageGet() {
